@@ -5,6 +5,7 @@
     <title>Index Page</title>
 </head>
 <body>
-<h1>Hello Index: ${link}</h1>
+    <h1>Hello Index:</h1>
+    <button><a href="login" name="Start">START</a></button>
 </body>
 </html>

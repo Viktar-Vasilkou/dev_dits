@@ -18,12 +18,30 @@ import javax.sql.DataSource;
 @ComponentScan("by.devincubator.vasilkou.dits")
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
+    private  CustomSuccessHandler customSuccessHandler;
+    private  PasswordEncoder passwordEncoder;
+    private  DataSource dataSource;
+
+    public SecurityConfiguration(){
+
+    }
+
     @Autowired
-    private CustomSuccessHandler customSuccessHandler;
+    public void setCustomSuccessHandler(CustomSuccessHandler customSuccessHandler) {
+        this.customSuccessHandler = customSuccessHandler;
+    }
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
     @Autowired
-    private DataSource dataSource;
+    public void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    public DataSource getDataSource() {
+        return dataSource;
+    }
 
     @Bean
     public CustomSuccessHandler getCustomSuccessHandler() {
@@ -38,14 +56,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception{
         auth.jdbcAuthentication()
-                .dataSource(dataSource)
-                .passwordEncoder(passwordEncoder)
+                .dataSource(getDataSource())
+                .passwordEncoder(getPasswordEncoder())
                 .usersByUsernameQuery("select login as username, password, true from user where login=?")
                 .authoritiesByUsernameQuery(
-                        "SELECT users.login as username, roles.name as role \n" +
-                        "        FROM users \n" +
-                        "        INNER JOIN userrole ON users.id = userrole.userId \n" +
-                        "        INNER JOIN roles ON userrole.roleId = roles.id\n" +
+                        "SELECT users.login as username, roles.name as role " +
+                        "        FROM users " +
+                        "        INNER JOIN userrole ON users.id = userrole.userId " +
+                        "        INNER JOIN roles ON userrole.roleId = roles.id" +
                         "        WHERE users.login = ?");
     }
 
@@ -53,17 +71,17 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
             .authorizeRequests()
-            .antMatchers("/", "/user/**").access("hasRole('USER')")
+            .antMatchers("/", "/index", "/home").permitAll()
+            .antMatchers("/user/**").access("hasRole('USER')")
             .antMatchers("/admin/**").access("hasRole('ADMIN')")
             .antMatchers("/tutor/**").access("hasRole('TUTOR')");
 
         http
             .formLogin()
             .loginPage("/login")
-            .successHandler(getCustomSuccessHandler())
             .usernameParameter("login")
             .passwordParameter("password")
-            .permitAll();
+            .successHandler(getCustomSuccessHandler());
 
         http
             .csrf();
@@ -74,6 +92,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
         http
             .logout()
+            .logoutSuccessUrl("/logout")
             .permitAll();
     }
 }
