@@ -10,78 +10,72 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.web.filter.CharacterEncodingFilter;
 
 import javax.sql.DataSource;
 
-@Configuration
 @EnableWebSecurity
 @ComponentScan("by.devincubator.vasilkou.dits")
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
-    private  CustomSuccessHandler customSuccessHandler;
-    private  PasswordEncoder passwordEncoder;
-    private  DataSource dataSource;
-
-    public SecurityConfiguration(){
-
-    }
-
     @Autowired
-    public void setCustomSuccessHandler(CustomSuccessHandler customSuccessHandler) {
-        this.customSuccessHandler = customSuccessHandler;
-    }
-    @Autowired
-    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
-        this.passwordEncoder = passwordEncoder;
-    }
-    @Autowired
-    public void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
-
-    public DataSource getDataSource() {
-        return dataSource;
-    }
+    private CustomSuccessHandler customSuccessHandler;
 
     @Bean
-    public CustomSuccessHandler getCustomSuccessHandler() {
+    public CustomSuccessHandler getCustomSuccessHandler(){
         return new CustomSuccessHandler();
     }
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Bean
-    public PasswordEncoder getPasswordEncoder() {
+    public  PasswordEncoder getPasswordEncoder(){
         return new BCryptPasswordEncoder();
     }
 
     @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception{
-        auth.jdbcAuthentication()
-                .dataSource(getDataSource())
-                .passwordEncoder(getPasswordEncoder())
-                .usersByUsernameQuery("select login as username, password, true from user where login=?")
+    private DataSource dataSource;
+
+    @Autowired
+    public void configureGlobalSecurity(AuthenticationManagerBuilder auth) throws Exception{
+                auth.jdbcAuthentication()
+                .dataSource(dataSource)
+                .passwordEncoder(passwordEncoder)
+                .usersByUsernameQuery("select login, password, 1 " +
+                        "from users where login=?")
                 .authoritiesByUsernameQuery(
-                        "SELECT users.login as username, roles.name as role " +
-                        "        FROM users " +
-                        "        INNER JOIN userrole ON users.id = userrole.userId " +
-                        "        INNER JOIN roles ON userrole.roleId = roles.id" +
-                        "        WHERE users.login = ?");
+                        "SELECT login, name " +
+                        "FROM users " +
+                        "JOIN userrole ON users.id = userId " +
+                        "JOIN roles ON roleId = roles.id " +
+                        "WHERE login=?");
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        CharacterEncodingFilter filter = new CharacterEncodingFilter();
+        filter.setEncoding("UTF-8");
+        filter.setForceEncoding(true);
+
         http
             .authorizeRequests()
-            .antMatchers("/", "/index", "/home").permitAll()
+            .antMatchers("/", "/index").permitAll()
             .antMatchers("/user/**").access("hasRole('USER')")
             .antMatchers("/admin/**").access("hasRole('ADMIN')")
-            .antMatchers("/tutor/**").access("hasRole('TUTOR')");
+            .antMatchers("/tutor/**").access("hasRole('TUTOR')")
+            .antMatchers( "/home").access("hasAnyRole('USER', 'ADMIN', 'TUTOR')");
 
         http
             .formLogin()
             .loginPage("/login")
-            .usernameParameter("login")
-            .passwordParameter("password")
-            .successHandler(getCustomSuccessHandler());
+            .failureUrl("/login?error")
+            .loginProcessingUrl("/login")
+            .usernameParameter("j_login")
+            .passwordParameter("j_password")
+            .successHandler(getCustomSuccessHandler())
+            .permitAll();
 
         http
             .csrf();
@@ -92,7 +86,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
         http
             .logout()
-            .logoutSuccessUrl("/logout")
-            .permitAll();
+            .permitAll()
+            .logoutUrl("/logout")
+            .logoutSuccessUrl("/login?logout")
+            .invalidateHttpSession(true);
+
+        http
+            .addFilterBefore(filter, CsrfFilter.class);
     }
 }

@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -15,12 +16,19 @@
 
 <body>
 
+
+
 <div class="container" style="width: 300px;">
-    <form method="post">
+    <form action="${loginUrl}" method="post" >
         <h2 class="form-signin-heading">Please sign in</h2>
-        <input type="text" class="form-control" name="login" placeholder="login">
-        <input type="password" class="form-control" name="password" placeholder="Password">
-        <button class="btn btn-lg btn-primary btn-block" type="submit">Войти</button>
+        <label>
+            <input type="text" class="form-control" name="j_login" placeholder="login">
+        </label>
+        <label>
+            <input type="password" class="form-control" name="j_password" placeholder="password">
+        </label>
+        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+        <button class="logIn" type="submit">Войти</button>
     </form>
 </div>
 

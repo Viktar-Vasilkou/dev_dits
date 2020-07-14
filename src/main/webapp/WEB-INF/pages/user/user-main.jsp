@@ -2,10 +2,9 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <html>
 <head>
-    <title>Index Page</title>
+    <title>User Page</title>
 </head>
 <body>
-    <h1>Hello Index:</h1>
-    <button><a href="/tutor/main" name="Start">START</a></button>
+    <h1>Hello USER</h1>
 </body>
 </html>

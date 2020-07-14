@@ -1,14 +1,10 @@
-package by.devincubator.vasilkou.dits.controller.tutor;
-
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-@Controller
-@RequestMapping("/tutor/")
-public class TutorController {
-
-    @RequestMapping("/main")
-    public String getTutorPage(){
-        return "main";
-    }
-}
+//package by.devincubator.vasilkou.dits.controller.tutor;
+//
+//import org.springframework.stereotype.Controller;
+//import org.springframework.web.bind.annotation.RequestMapping;
+//
+//@Controller
+//public class TutorController {
+//
+//
+//}
